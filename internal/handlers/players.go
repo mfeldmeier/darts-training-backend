@@ -23,6 +23,7 @@ func NewPlayerHandler(playerService *services.PlayerService) *PlayerHandler {
 func (h *PlayerHandler) GetAllPlayers(c *gin.Context) {
 	// Get query parameters for filtering
 	teamIDParam := c.Query("team_id")
+	activeOnlyParam := c.Query("active_only")
 
 	var players []models.Player
 	var err error
@@ -33,9 +34,20 @@ func (h *PlayerHandler) GetAllPlayers(c *gin.Context) {
 			c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid team ID format"})
 			return
 		}
-		players, err = h.playerService.GetPlayersByTeam(teamID)
+
+		// Check if we should only return active players
+		if activeOnlyParam == "true" {
+			players, err = h.playerService.GetActivePlayersByTeam(teamID)
+		} else {
+			players, err = h.playerService.GetPlayersByTeam(teamID)
+		}
 	} else {
-		players, err = h.playerService.GetAllPlayers()
+		// Check if we should only return active players
+		if activeOnlyParam == "true" {
+			players, err = h.playerService.GetActivePlayers()
+		} else {
+			players, err = h.playerService.GetAllPlayers()
+		}
 	}
 
 	if err != nil {
@@ -258,4 +270,48 @@ func (h *PlayerHandler) CreateCurrentUser(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusCreated, player.ToResponse())
+}
+
+// ActivatePlayer activates a player
+func (h *PlayerHandler) ActivatePlayer(c *gin.Context) {
+	idParam := c.Param("id")
+	id, err := uuid.Parse(idParam)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid player ID format"})
+		return
+	}
+
+	err = h.playerService.ActivatePlayer(id)
+	if err != nil {
+		if err.Error() == "player not found" {
+			c.JSON(http.StatusNotFound, gin.H{"error": "Player not found"})
+			return
+		}
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to activate player"})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"message": "Player activated successfully"})
+}
+
+// DeactivatePlayer deactivates a player
+func (h *PlayerHandler) DeactivatePlayer(c *gin.Context) {
+	idParam := c.Param("id")
+	id, err := uuid.Parse(idParam)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid player ID format"})
+		return
+	}
+
+	err = h.playerService.DeactivatePlayer(id)
+	if err != nil {
+		if err.Error() == "player not found" {
+			c.JSON(http.StatusNotFound, gin.H{"error": "Player not found"})
+			return
+		}
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to deactivate player"})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"message": "Player deactivated successfully"})
 }

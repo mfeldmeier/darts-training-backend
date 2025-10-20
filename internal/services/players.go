@@ -95,6 +95,7 @@ func (s *PlayerService) CreatePlayer(req *models.PlayerCreateRequest) (*models.P
 		Email:     req.Email,
 		Nickname:  req.Nickname,
 		IsCaptain: req.IsCaptain,
+		IsActive:  req.IsActive,
 		TeamID:    teamID,
 	}
 
@@ -136,6 +137,9 @@ func (s *PlayerService) UpdatePlayer(id uuid.UUID, req *models.PlayerUpdateReque
 	}
 	if req.IsCaptain != nil {
 		player.IsCaptain = *req.IsCaptain
+	}
+	if req.IsActive != nil {
+		player.IsActive = *req.IsActive
 	}
 
 	// Handle team assignment
@@ -274,4 +278,60 @@ func (s *PlayerService) FindOrCreatePlayerByAuth0(auth0User models.Auth0User) (*
 	}
 
 	return s.GetPlayerByID(newPlayer.ID)
+}
+
+// ActivatePlayer activates a player
+func (s *PlayerService) ActivatePlayer(id uuid.UUID) error {
+	var player models.Player
+	if err := s.db.First(&player, "id = ?", id).Error; err != nil {
+		if err == gorm.ErrRecordNotFound {
+			return fmt.Errorf("player not found")
+		}
+		return fmt.Errorf("failed to fetch player: %w", err)
+	}
+
+	player.IsActive = true
+	if err := s.db.Save(&player).Error; err != nil {
+		return fmt.Errorf("failed to activate player: %w", err)
+	}
+
+	return nil
+}
+
+// DeactivatePlayer deactivates a player
+func (s *PlayerService) DeactivatePlayer(id uuid.UUID) error {
+	var player models.Player
+	if err := s.db.First(&player, "id = ?", id).Error; err != nil {
+		if err == gorm.ErrRecordNotFound {
+			return fmt.Errorf("player not found")
+		}
+		return fmt.Errorf("failed to fetch player: %w", err)
+	}
+
+	player.IsActive = false
+	if err := s.db.Save(&player).Error; err != nil {
+		return fmt.Errorf("failed to deactivate player: %w", err)
+	}
+
+	return nil
+}
+
+// GetActivePlayers returns only active players
+func (s *PlayerService) GetActivePlayers() ([]models.Player, error) {
+	var players []models.Player
+	err := s.db.Preload("Team").Where("is_active = ?", true).Find(&players).Error
+	if err != nil {
+		return nil, fmt.Errorf("failed to fetch active players: %w", err)
+	}
+	return players, nil
+}
+
+// GetActivePlayersByTeam returns only active players from a specific team
+func (s *PlayerService) GetActivePlayersByTeam(teamID uuid.UUID) ([]models.Player, error) {
+	var players []models.Player
+	err := s.db.Preload("Team").Where("team_id = ? AND is_active = ?", teamID, true).Find(&players).Error
+	if err != nil {
+		return nil, fmt.Errorf("failed to fetch active team players: %w", err)
+	}
+	return players, nil
 }

@@ -13,6 +13,7 @@ type Player struct {
 	Email        string     `gorm:"uniqueIndex;not null" json:"email"`
 	Nickname     *string    `json:"nickname"`
 	IsCaptain    bool       `gorm:"default:false" json:"is_captain"`
+	IsActive     bool       `gorm:"default:true" json:"is_active"`
 	Auth0UserID  *string    `gorm:"uniqueIndex" json:"auth0_user_id"`
 	TeamID       *uuid.UUID `json:"team_id"`
 	CreatedAt    time.Time  `json:"created_at"`
@@ -33,6 +34,7 @@ type PlayerCreateRequest struct {
 	Email     string  `json:"email" binding:"required,email"`
 	Nickname  *string `json:"nickname"`
 	IsCaptain bool    `json:"is_captain"`
+	IsActive  bool    `json:"is_active"`
 	TeamID    *string `json:"team_id"`
 }
 
@@ -41,6 +43,7 @@ type PlayerUpdateRequest struct {
 	Email     *string `json:"email"`
 	Nickname  *string `json:"nickname"`
 	IsCaptain *bool   `json:"is_captain"`
+	IsActive  *bool   `json:"is_active"`
 	TeamID    *string `json:"team_id"`
 }
 
@@ -50,6 +53,7 @@ type PlayerResponse struct {
 	Email       string    `json:"email"`
 	Nickname    *string   `json:"nickname"`
 	IsCaptain   bool      `json:"is_captain"`
+	IsActive    bool      `json:"is_active"`
 	TeamID      *uuid.UUID `json:"team_id"`
 	CreatedAt   time.Time `json:"created_at"`
 	UpdatedAt   time.Time `json:"updated_at"`
@@ -62,6 +66,7 @@ type PlayerWithTeamResponse struct {
 	Email       string     `json:"email"`
 	Nickname    *string    `json:"nickname"`
 	IsCaptain   bool       `json:"is_captain"`
+	IsActive    bool       `json:"is_active"`
 	Team        *Team      `json:"team,omitempty"`
 	CreatedAt   time.Time  `json:"created_at"`
 	UpdatedAt   time.Time  `json:"updated_at"`
@@ -79,6 +84,7 @@ func (p *Player) ToResponse() PlayerResponse {
 		Email:     p.Email,
 		Nickname:  p.Nickname,
 		IsCaptain: p.IsCaptain,
+		IsActive:  p.IsActive,
 		TeamID:    p.TeamID,
 		CreatedAt: p.CreatedAt,
 		UpdatedAt: p.UpdatedAt,
@@ -93,6 +99,7 @@ func (p *Player) ToResponseWithTeam() PlayerWithTeamResponse {
 		Email:     p.Email,
 		Nickname:  p.Nickname,
 		IsCaptain: p.IsCaptain,
+		IsActive:  p.IsActive,
 		Team:      p.Team,
 		CreatedAt: p.CreatedAt,
 		UpdatedAt: p.UpdatedAt,

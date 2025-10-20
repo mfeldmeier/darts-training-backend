@@ -102,6 +102,8 @@ func main() {
 				players.GET("/:id", playerHandler.GetPlayerByID)
 				players.PUT("/:id", playerHandler.UpdatePlayer)
 				players.DELETE("/:id", playerHandler.DeletePlayer)
+				players.PUT("/:id/activate", playerHandler.ActivatePlayer)
+				players.PUT("/:id/deactivate", playerHandler.DeactivatePlayer)
 				players.GET("/team/:teamId", playerHandler.GetPlayersByTeam)
 				players.GET("/me", playerHandler.GetCurrentUser)
 				players.POST("/me", playerHandler.CreateCurrentUser)
