@@ -61,9 +61,9 @@ func (s *PlayerService) GetPlayerByAuth0ID(auth0UserID string) (*models.Player, 
 }
 
 func (s *PlayerService) CreatePlayer(req *models.PlayerCreateRequest) (*models.Player, error) {
-	// Check if email already exists
+	// Check if email already exists (excluding deleted records)
 	var existingPlayer models.Player
-	err := s.db.Where("email = ?", req.Email).First(&existingPlayer).Error
+	err := s.db.Where("email = ? AND deleted_at IS NULL", req.Email).First(&existingPlayer).Error
 	if err == nil {
 		return nil, fmt.Errorf("player with email '%s' already exists", req.Email)
 	}
@@ -118,7 +118,7 @@ func (s *PlayerService) UpdatePlayer(id uuid.UUID, req *models.PlayerUpdateReque
 	// Check if email already exists (if updating email)
 	if req.Email != nil && *req.Email != player.Email {
 		var existingPlayer models.Player
-		err := s.db.Where("email = ? AND id != ?", *req.Email, id).First(&existingPlayer).Error
+		err := s.db.Where("email = ? AND id != ? AND deleted_at IS NULL", *req.Email, id).First(&existingPlayer).Error
 		if err == nil {
 			return nil, fmt.Errorf("player with email '%s' already exists", *req.Email)
 		}

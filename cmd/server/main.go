@@ -127,6 +127,7 @@ func main() {
 			// Game routes
 			games := protected.Group("/games")
 			{
+				games.GET("", gameHandler.GetAllGames)
 				games.GET("/modes", gameHandler.GetAllGameModes)
 				games.GET("/training/:sessionId", gameHandler.GetGamesByTrainingSession)
 				games.POST("/training/:sessionId", gameHandler.CreateGame)

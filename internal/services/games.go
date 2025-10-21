@@ -312,6 +312,33 @@ func (s *GameService) GenerateGamesForTraining(trainingSessionID uuid.UUID, game
 	return games, nil
 }
 
+// GetAllGames returns all games with optional filtering
+func (s *GameService) GetAllGames(trainingSessionID *uuid.UUID, playerID *uuid.UUID, status *string) ([]models.TrainingGame, error) {
+	var games []models.TrainingGame
+	query := s.db.Preload("GameMode").
+		Preload("Player1").
+		Preload("Player2").
+		Preload("TrainingSession")
+
+	// Apply filters
+	if trainingSessionID != nil {
+		query = query.Where("training_session_id = ?", *trainingSessionID)
+	}
+	if playerID != nil {
+		query = query.Where("player1_id = ? OR player2_id = ?", *playerID, *playerID)
+	}
+	if status != nil {
+		query = query.Where("status = ?", *status)
+	}
+
+	err := query.Order("created_at DESC").Find(&games).Error
+	if err != nil {
+		return nil, fmt.Errorf("failed to fetch games: %w", err)
+	}
+
+	return games, nil
+}
+
 // Helper function
 func stringPtr(s string) *string {
 	return &s

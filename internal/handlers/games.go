@@ -218,3 +218,47 @@ func (h *GameHandler) GenerateGames(c *gin.Context) {
 
 	c.JSON(http.StatusCreated, response)
 }
+
+// GetAllGames returns all games with optional filtering
+func (h *GameHandler) GetAllGames(c *gin.Context) {
+	// Parse query parameters
+	var trainingSessionID *uuid.UUID
+	var playerID *uuid.UUID
+	var status *string
+
+	if trainingSessionIDParam := c.Query("training_session_id"); trainingSessionIDParam != "" {
+		if parsedID, err := uuid.Parse(trainingSessionIDParam); err == nil {
+			trainingSessionID = &parsedID
+		} else {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid training session ID format"})
+			return
+		}
+	}
+
+	if playerIDParam := c.Query("player_id"); playerIDParam != "" {
+		if parsedID, err := uuid.Parse(playerIDParam); err == nil {
+			playerID = &parsedID
+		} else {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid player ID format"})
+			return
+		}
+	}
+
+	if statusParam := c.Query("status"); statusParam != "" {
+		status = &statusParam
+	}
+
+	games, err := h.gameService.GetAllGames(trainingSessionID, playerID, status)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to fetch games"})
+		return
+	}
+
+	// Convert to response format
+	response := make([]models.TrainingGameResponse, len(games))
+	for i, game := range games {
+		response[i] = game.ToResponse()
+	}
+
+	c.JSON(http.StatusOK, response)
+}
